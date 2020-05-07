@@ -1,10 +1,11 @@
 // function getFlights
 const getData = require('./getData');
 const findIndicesOfConnection = require('./findIndicesOfConnection');
+const capitalize = require('./capitalize');
 
 function getFlights(req, res) {
-    const depcity = req.body.conversation.memory['depcity'].value;
-    const arrcity = req.body.conversation.memory['arrcity'].value;
+    var departure = req.body.conversation.memory['depcity'].value;
+    var arrival = req.body.conversation.memory['arrcity'].value;
 
     var URL = "https://sapdemo-s4.exxcellent.de:8001/sap/opu/odata/sap/ZTRAVEL_SRV/ZBC_C_Connection_TP/?$format=json&sap-client=100&sap-user=skr&sap-password=exxcellent123";
 
@@ -17,13 +18,14 @@ function getFlights(req, res) {
     getData(URL).then(data => {
         // Find flight indices with right depcity and arrcity
         var dataCopy = data.d.results.slice(); // get copy of data able to be manipulated
-        flightIndex = findIndicesOfConnection(dataCopy, depcity, arrcity);
+        flightIndex = findIndicesOfConnection(dataCopy, departure, arrival);
 
         var ret = "";
         var flightsSaved = [];
-        var button = [];
+        var button = []; // prepare button to be returned
         var flight;
 
+        // prepare list of flights
         for (var i = 0; i < flightIndex.length; i++) {
             flight = data.d.results[flightIndex[i]];
             ret += `\n\nNo. ${i + 1}:\nCarrier: ${flight.Carrid} \nConnid: ${flight.Connid} \nFrom: ${flight.Cityfrom} (${flight.Airpfrom}) \nTo: ${flight.Cityto} (${flight.Airpto}) \nDeparture: ${flight.Deptime.replace("PT", "").replace("00S", "")} \nArrival: ${flight.Arrtime.replace("PT", "").replace("00S", "")}`;
@@ -32,19 +34,34 @@ function getFlights(req, res) {
         }
         button.push({ title: 'No, thank you.', value: 'No.' });
 
+        // String for right statement in output
+        var article = `found totally ${flightsSaved.length} different connections:`;
+        if (flightsSaved.length === 1) {
+            article = `found one single connection:`;
+        }
+
+        // prepare memoryupdate
+        var memory = req.body.conversation.memory;
+        memory.flights = flightsSaved;
+
         if (flightIndex.length === 0) { // No flights found
             res.json({
                 replies: [
                     {
-                        type: 'text', content: `I'm sorry but I didn't find any flights from ${depcity} to ${arrcity}.\n`
+                        type: 'text', content: `I'm sorry but I didn't find any flights from ${capitalize(departure)} to ${capitalize(arrival)}.\n`
                     },
                 ],
+                conversation: {
+                    memory: {
+
+                    }
+                }
             });
         } else {
             res.json({
                 replies: [
                     {
-                        type: 'text', content: `Here are all flights that I found for you:${ret}`,
+                        type: 'text', content: `I was looking for flights from ${capitalize(departure)} to ${capitalize(arrival)} and ${article} ${ ret }`,
                     },
                     {
                         type: 'quickReplies',
@@ -55,13 +72,19 @@ function getFlights(req, res) {
                     },
                 ],
                 conversation: {
-                    memory: {
-                        flights: flightsSaved,
-                    }
+                    memory,
                 }
             });
         }
-    })
+    }).catch(err => {
+        res.json({
+            replies: [
+                {
+                    type: 'text', content: `Something must have gone wrong. Please try to explain your matter once again.`
+                },
+            ],
+        });
+    });
 };
 
 module.exports = getFlights;

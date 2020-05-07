@@ -1,4 +1,5 @@
 // function findIndicesOfConnection
+// seraches in data for flights with specific depcity and arrcity
 function findIndicesOfConnection(data, depcity, arrcity) {
     var flightIndex = [];
     var counter = 0;

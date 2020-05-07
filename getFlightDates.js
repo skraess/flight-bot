@@ -15,15 +15,25 @@ function getFlightDates(req, res) {
         var dataCopy = data.d.results.slice(); // get copy of data able to be manipulated
         flightIndex = findIndicesOfFlights(dataCopy, connid);
 
-        var ret = "";
+        var ret = ""; // String for saving dates in right fromat
         var flight;
 
+        var curDate = new Date();
+
+        // getDates of flights found
         for (var i = 0; i < flightIndex.length; i++) {
             flight = data.d.results[flightIndex[i]];
             var date = new Date(parseInt(flight.Fldate.replace("/Date(", "").replace(")/", "")));
             var freeplaces = flight.Seatsmax - flight.Seatsocc;
-            ret += `${date.toString().slice(0, 15)} (Free places: ${freeplaces})\n`;
+            if (date.getTime() > curDate.getTime() && freeplaces > 0) { // check if flight is in future or past and not sold out
+                ret += `${date.toString().slice(0, 15)} (Free places: ${freeplaces})\n`;
+            }
         }
+
+        // prepare memory update
+        var memory = req.body.conversation.memory;
+        memory.connid = {raw: connid };
+        memory.airline = { shortname: carrid };
 
         res.json({
             replies: [
@@ -31,12 +41,15 @@ function getFlightDates(req, res) {
                     type: 'text', content: `Here are the flight dates of ${carrid} ${connid}:\n\n${ret}`
                 },
             ],
+            conversation: {
+                memory,
+            }
         });
     }).catch(err => {
         res.json({
             replies: [
                 {
-                    type: 'text', content: `I'm sorry but I didn't find any flight with your criteria.`
+                    type: 'text', content: `Something must have gone wrong. Please try to explain your matter once again.`
                 },
             ],
         });

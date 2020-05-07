@@ -7,6 +7,9 @@ const getFlightTime = require('./getFlightTime');
 const getFlights = require('./getFlights');
 const getFlightDates = require('./getFlightDates');
 const findConnid = require('./findConnid');
+const checkFlightData = require('./checkFlightData');
+const postBooking = require('./postBooking');
+const confirmBooking = require('./confirmBooking');
 
 const app = express();
 app.use(bodyParser.json());
@@ -16,6 +19,9 @@ app.post('/get-flight-time', getFlightTime);
 app.post('/get-flights', getFlights);
 app.post('/get-flight-dates', getFlightDates);
 app.post('/find-connid', findConnid);
+app.post('/check-flight-data', checkFlightData);
+app.post('/post-booking', postBooking);
+app.post('/confirm-booking', confirmBooking);
 
 app.post('/errors', function (req, res) {
     console.error(req.body);

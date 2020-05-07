@@ -1,4 +1,5 @@
 // function findIndicesOfFlights
+// returns an array with indices of the flights with given connid
 function findIndicesOfFlights(data, connid) {
     var flightIndex = [];
     var counter = 0;

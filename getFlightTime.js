@@ -1,5 +1,7 @@
-// function getFlightDates
+// function getFlightTime
+// Outputs departure and arrival time of specific flight
 const getData = require('./getData');
+const capitalize = require('./capitalize');
 
 function getFlightTime(req, res) {
     const airline = req.body.conversation.memory['airline'].shortname;
@@ -10,14 +12,14 @@ function getFlightTime(req, res) {
 
     getData(URL);
     getData(URL).then(data => {
-        // Get departure time
+        // Get departure and arrival time
         const deptime = data.d.Deptime.replace("PT", "").replace("00S", "");
         const arrtime = data.d.Arrtime.replace("PT", "").replace("00S", "");
 
         res.json({
             replies: [
                 {
-                    type: 'text', content: `Your flight will leave ${data.d.Cityfrom}(${data.d.Airpfrom}) at ${deptime} and will land in ${data.d.Cityto}(${data.d.Airpto}) at ${arrtime}.`
+                    type: 'text', content: `Your flight will leave ${capitalize(data.d.Cityfrom.toLowerCase())}(${data.d.Airpfrom}) at ${deptime} and will land in ${capitalize(data.d.Cityto.toLowerCase())}(${data.d.Airpto}) at ${arrtime}.`
                 },
             ],
         });
@@ -25,7 +27,7 @@ function getFlightTime(req, res) {
         res.json({
             replies: [
                 {
-                    type: 'text', content: `I'm sorry but I didn't find any flight with your criteria.`
+                    type: 'text', content: `Something must have gone wrong. Please try to explain your matter once again.`
                 },
             ],
         });
