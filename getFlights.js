@@ -24,25 +24,36 @@ function getFlights(req, res) {
         var flightsSaved = [];
         var button = []; // prepare button to be returned
         var flight;
+                
+        if (flightIndex.length === 1) {
+            var article = `found one single connection:`;
+            var confirmation = 'Do you want to see possible flight dates of this flight?';
 
-        // prepare list of flights
-        for (var i = 0; i < flightIndex.length; i++) {
-            flight = data.d.results[flightIndex[i]];
-            ret += `\n\nNo. ${i + 1}:\nCarrier: ${flight.Carrid} \nConnid: ${flight.Connid} \nFrom: ${flight.Cityfrom} (${flight.Airpfrom}) \nTo: ${flight.Cityto} (${flight.Airpto}) \nDeparture: ${flight.Deptime.replace("PT", "").replace("00S", "")} \nArrival: ${flight.Arrtime.replace("PT", "").replace("00S", "")}`;
+            // prepare information of this single sonnection
+            flight = data.d.results[flightIndex[0]];
+            ret += `\n\nCarrier: ${flight.Carrid} \nConnid: ${flight.Connid} \nFrom: ${flight.Cityfrom} (${flight.Airpfrom}) \nTo: ${flight.Cityto} (${flight.Airpto}) \nDeparture: ${flight.Deptime.replace("PT", "").replace("00S", "")} \nArrival: ${flight.Arrtime.replace("PT", "").replace("00S", "")}`;
             flightsSaved.push(flight);
-            button.push({ title: "Yes, for No. " + (i + 1), value: "Yes, for number " + (i + 1) + "." });
+            button.push({ title: "Yes", value: "Yes, for number 1." });            
+        } else {            
+            var article = `found totally ${flightIndex.length} different connections:`;
+            var confirmation = 'Do you want to see possible flight dates of one of these flights?';
+            // prepare list of all connections
+            for (var i = 0; i < flightIndex.length; i++) {
+                flight = data.d.results[flightIndex[i]];
+                ret += `\n\nNo. ${i + 1}:\nCarrier: ${flight.Carrid} \nConnid: ${flight.Connid} \nFrom: ${flight.Cityfrom} (${flight.Airpfrom}) \nTo: ${flight.Cityto} (${flight.Airpto}) \nDeparture: ${flight.Deptime.replace("PT", "").replace("00S", "")} \nArrival: ${flight.Arrtime.replace("PT", "").replace("00S", "")}`;
+                flightsSaved.push(flight);
+                button.push({ title: "Yes, for No. " + (i + 1), value: "Yes, for number " + (i + 1) + "." });
+            }            
         }
-        button.push({ title: 'No, thank you.', value: 'No.' });
 
-        // String for right statement in output
-        var article = `found totally ${flightsSaved.length} different connections:`;
-        if (flightsSaved.length === 1) {
-            article = `found one single connection:`;
-        }
+        button.push({ title: 'No, thank you', value: 'No.' });
 
         // prepare memoryupdate
         var memory = req.body.conversation.memory;
         memory.flights = flightsSaved;
+        if (flightsSaved.length === 1) {
+            memory.searchid = { scalar: 1 };
+        }
 
         if (flightIndex.length === 0) { // No flights found
             res.json({
@@ -66,7 +77,7 @@ function getFlights(req, res) {
                     {
                         type: 'quickReplies',
                         content: {
-                            title: 'Do you want to see possible flight dates of one of these flights?',
+                            title: confirmation,
                             buttons: button,
                         },
                     },

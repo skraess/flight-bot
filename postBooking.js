@@ -1,7 +1,4 @@
 // function postBooking
-//const axios = require('axios');
-//const https = require('https');
-//const httpsAgent = new https.Agent({ rejectUnauthorized: false, keepAlive: true });
 const sendPost = require('./sendPost');
 
 function postBooking(req, res) {

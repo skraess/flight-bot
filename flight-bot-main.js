@@ -10,6 +10,8 @@ const findConnid = require('./findConnid');
 const checkFlightData = require('./checkFlightData');
 const postBooking = require('./postBooking');
 const confirmBooking = require('./confirmBooking');
+const showAllFlights = require('./showAllFlights');
+const memoryUpdateCities = require('./memoryUpdateCities');
 
 const app = express();
 app.use(bodyParser.json());
@@ -22,6 +24,8 @@ app.post('/find-connid', findConnid);
 app.post('/check-flight-data', checkFlightData);
 app.post('/post-booking', postBooking);
 app.post('/confirm-booking', confirmBooking);
+app.post('/show-all-flights', showAllFlights);
+app.post('/memory-update-cities', memoryUpdateCities);
 
 app.post('/errors', function (req, res) {
     console.error(req.body);

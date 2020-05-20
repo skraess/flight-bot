@@ -20,58 +20,73 @@ function checkFlightData(req, res) {
         var dataCopy = data.d.results.slice();
         flightIndices = findIndicesOfConnection(dataCopy, depcity, arrcity);
 
-        for (var i = 0; i < flightIndices.length; i++) {
-            connids.push(data.d.results[flightIndices[i]].Connid);
-        }
-
-        var URL2 = "https://sapdemo-s4.exxcellent.de:8001/sap/opu/odata/sap/ZTRAVEL_SRV/ZBC_C_Carrier_TP%28%27" + carrid + "%27%29/to_Flight/?$format=json&sap-client=100&sap-user=skr&sap-password=exxcellent123";
-
-        getData(URL2);
-        getData(URL2).then(response => {
-            // search for flights with the given data
-            var date1 = new Date(flightdate).toLocaleString();
-            var found = "false";
-            for (var i = 0; i < response.d.results.length; i++) {
-                var flight = response.d.results[i];
-                if (flight.Carrid.toLowerCase() === carrid.toLowerCase() && flight.Connid.toLowerCase() === connids[0].toLowerCase()) {
-                    var date2 = new Date(parseInt(flight.Fldate.replace("/Date(", "").replace(")/", ""))).toLocaleString();
-                    if (date1 === date2) {
-                        found = "true";
-                        finalConnid = flight.Connid;
-                        break;
-                    }
-                }
-            }
-
-            // adopt format of memory values
+        // no flights found with given data
+        if (flightIndices.length === 0) {
             var memory = req.body.conversation.memory;
-            memory.depcity.value = memory.depcity.value.toUpperCase();
-            memory.arrcity.value = memory.arrcity.value.toUpperCase();
-            memory.name.raw = memory.name.raw.toUpperCase();
-            memory.date.formatted = memory.date.formatted.replace("at 12:00:00 AM (+0000)", "");
-            memory.connid = { raw: finalConnid , number: finalConnid};
-
-            // set new variable in memory to remember if flight was found
-            if (found === "false") {
-                memory.checked = "no";
-            } else {
-                memory.checked = "yes";
-            }
+            memory.checked = "no";
 
             res.json({
                 conversation: {
                     memory,
                 }
             });
+        } else {
 
-        }).catch(err => {
-            res.json({
-                replies: [
-                    {
-                        type: 'text', content: `Something must have gone wrong. Please try to explain your matter once again.`
-                    },
-                ],
+            // check if the connection offers a flight at given date
+            for (var i = 0; i < flightIndices.length; i++) {
+                connids.push(data.d.results[flightIndices[i]].Connid);
+            }
+
+            var URL2 = "https://sapdemo-s4.exxcellent.de:8001/sap/opu/odata/sap/ZTRAVEL_SRV/ZBC_C_Carrier_TP%28%27" + carrid + "%27%29/to_Flight/?$format=json&sap-client=100&sap-user=skr&sap-password=exxcellent123";
+
+            getData(URL2);
+            getData(URL2).then(response => {
+                // search for flights with the given date
+                var date1 = new Date(flightdate).toLocaleString();
+                var found = "false";
+                for (var i = 0; i < response.d.results.length; i++) {
+                    var flight = response.d.results[i];
+                    for (var j = 0; j < connids.length; j++) { // check if the current flight has one of the right connids
+                        if (flight.Connid.toLowerCase() === connids[j].toLowerCase()) { // check if date is right
+                            var date2 = new Date(parseInt(flight.Fldate.replace("/Date(", "").replace(")/", ""))).toLocaleString();
+                            if (date1 === date2) {
+                                found = "true";
+                                finalConnid = flight.Connid;
+                                break;
+                            }
+                        }
+                    }                    
+                }
+
+                // adopt format of memory values
+                var memory = req.body.conversation.memory;
+                memory.depcity.value = memory.depcity.value.toUpperCase();
+                memory.arrcity.value = memory.arrcity.value.toUpperCase();
+                memory.name.raw = memory.name.raw.toUpperCase();
+                memory.date.formatted = memory.date.formatted.replace("at 12:00:00 AM (+0000)", "");
+                memory.connid = { raw: finalConnid, number: finalConnid };
+
+                // set new variable in memory to remember if flight on given date was found
+                if (found === "false") {
+                    memory.checked = "no";
+                } else {
+                    memory.checked = "yes";
+                }
+
+                res.json({
+                    conversation: {
+                        memory,
+                    }
+                });
             });
+        }
+    }).catch(err => {
+        res.json({
+            replies: [
+                {
+                    type: 'text', content: `Something must have gone wrong. Please try to explain your matter once again.`
+                },
+            ],
         });
     });
 }
